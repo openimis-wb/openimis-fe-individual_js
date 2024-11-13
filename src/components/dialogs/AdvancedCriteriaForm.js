@@ -22,7 +22,7 @@ import {
   INDIVIDUAL,
   DEFAULT_BENEFICIARY_STATUS,
 } from '../../constants';
-import { isBase64Encoded, isEmptyObject } from '../../utils';
+import { isBase64Encoded, isEmptyObject, capitalize } from '../../utils';
 import { confirmEnrollment, fetchIndividualEnrollmentSummary } from '../../actions';
 import IndividualPreviewEnrollmentDialog from './IndividualPreviewEnrollmentDialog';
 
@@ -94,13 +94,14 @@ function AdvancedCriteriaForm({
     }) => (`"${field}__${filter}__${type}=${value}"`));
 
     const isMatch = (
-      enrollmentSummaryParams && benefitPlan
+      enrollmentSummaryParams && benefitPlan && status
       && decodeId(enrollmentSummaryParams.benefitPlan.id) === decodeId(benefitPlan?.id)
       && `[${enrollmentSummaryParams.customFilters}]` === `[${stringFilters}]`
+      && enrollmentSummaryParams.status === editedEnrollmentParams.status
     );
 
     setSummaryMatchesEditedParams(isMatch);
-  }, [benefitPlan?.id, filters]);
+  }, [benefitPlan?.id, filters, editedEnrollmentParams?.status]);
 
   const createParams = (moduleName, objectTypeName, uuidOfObject = null, additionalParams = null) => {
     const params = [
@@ -170,6 +171,7 @@ function AdvancedCriteriaForm({
     const params = [
       `customFilters: [${customFilters}]`,
       `benefitPlanId: "${decodeId(benefitPlan.id)}"`,
+      `status: "${status}"`,
     ];
     fetchIndividualEnrollmentSummary(params);
 
@@ -177,6 +179,7 @@ function AdvancedCriteriaForm({
       ...enrollmentSummaryParams,
       customFilters,
       benefitPlan,
+      status,
     });
 
     setSummaryMatchesEditedParams(true);
@@ -321,7 +324,7 @@ function AdvancedCriteriaForm({
           {formatMessage(intl, 'individual', 'individual.enrollment.summary')}
         </div>
         <Divider />
-        <Grid container spacing={2}>
+        <Grid container spacing={2} style={{ padding: '10px 0px' }}>
           <Grid item xs={6}>
             <Paper elevation={3} style={{ padding: '20px' }}>
               <Typography variant="h6" gutterBottom>
@@ -377,6 +380,17 @@ function AdvancedCriteriaForm({
             <Paper elevation={3} style={{ padding: '20px' }}>
               <Typography variant="h6" gutterBottom>
                 {/* eslint-disable-next-line max-len */}
+                {formatMessageWithValues(intl, 'individual', 'individual.enrollment.numberOfIndividualsAssignedToSelectedProgrammeAndStatus', { selectedStatus: capitalize(editedEnrollmentParams?.status) })}
+              </Typography>
+              <Typography variant="body1">
+                {enrollmentSummary.numberOfIndividualsAssignedToSelectedProgrammeAndStatus}
+              </Typography>
+            </Paper>
+          </Grid>
+          <Grid item xs={6}>
+            <Paper elevation={3} style={{ padding: '20px' }}>
+              <Typography variant="h6" gutterBottom>
+                {/* eslint-disable-next-line max-len */}
                 {formatMessage(intl, 'individual', 'individual.enrollment.numberOfIndividualsToBeUploaded')}
               </Typography>
               <Typography variant="body1">
@@ -384,6 +398,26 @@ function AdvancedCriteriaForm({
               </Typography>
             </Paper>
           </Grid>
+          <Grid item xs={6}>
+            <Paper elevation={3} style={{ padding: '20px' }}>
+              <Typography variant="h6" gutterBottom>
+                {/* eslint-disable-next-line max-len */}
+                {formatMessageWithValues(intl, 'individual', 'individual.enrollment.numberOfIndividualsWithStatusPostEnrollment', { selectedStatus: capitalize(editedEnrollmentParams?.status) })}
+              </Typography>
+              <Typography variant="body1">
+                {parseInt(enrollmentSummary.numberOfIndividualsToUpload, 10) + parseInt(enrollmentSummary.numberOfIndividualsAssignedToSelectedProgrammeAndStatus, 10)}
+              </Typography>
+            </Paper>
+          </Grid>
+          {enrollmentSummary.maxActiveBeneficiariesExceeded && (
+          <Grid item xs={12}>
+            <Paper elevation={3} style={{ padding: '15px' }}>
+              <Typography variant="body1" style={{ color: '#c62828', fontWeight: 'bold' }}>
+                {formatMessageWithValues(intl, 'individual', 'individual.enrollment.warnMaxActiveBeneficiariesExceeded', { benefitPlanName: benefitPlan?.name, maxActiveBeneficiaries: benefitPlan?.maxBeneficiaries })}
+              </Typography>
+            </Paper>
+          </Grid>
+          )}
         </Grid>
         <Grid container spacing={3}>
           <Grid item xs={5} />
@@ -393,7 +427,7 @@ function AdvancedCriteriaForm({
               variant="contained"
               color="primary"
               autoFocus
-              disabled={!benefitPlan || confirmed || enrollmentSummary.numberOfIndividualsToUpload === '0'}
+              disabled={!benefitPlan || confirmed || enrollmentSummary.numberOfIndividualsToUpload === '0' || enrollmentSummary.maxActiveBeneficiariesExceeded}
             >
               {formatMessage(intl, 'individual', 'individual.enrollment.confirmEnrollment')}
             </Button>
