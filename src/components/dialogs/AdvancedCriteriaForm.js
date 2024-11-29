@@ -405,7 +405,7 @@ function AdvancedCriteriaForm({
                 {formatMessageWithValues(intl, 'individual', 'individual.enrollment.numberOfIndividualsWithStatusPostEnrollment', { selectedStatus: capitalize(editedEnrollmentParams?.status) })}
               </Typography>
               <Typography variant="body1">
-                {parseInt(enrollmentSummary.numberOfIndividualsToUpload, 10) + parseInt(enrollmentSummary.numberOfIndividualsAssignedToSelectedProgrammeAndStatus, 10)}
+                {enrollmentSummary.numberOfIndividualsToUpload + enrollmentSummary.numberOfIndividualsAssignedToSelectedProgrammeAndStatus}
               </Typography>
             </Paper>
           </Grid>
