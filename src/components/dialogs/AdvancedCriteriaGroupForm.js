@@ -33,8 +33,7 @@ const styles = (theme) => ({
 function AdvancedCriteriaGroupForm({
   intl,
   classes,
-  object,
-  objectToSave,
+  benefitPlan,
   fetchCustomFilter,
   customFilters,
   moduleName,
@@ -54,7 +53,7 @@ function AdvancedCriteriaGroupForm({
   clearConfirm,
   coreConfirm,
   rights,
-  edited,
+  editedEnrollmentParams,
 }) {
   // eslint-disable-next-line no-unused-vars
   const [currentFilter, setCurrentFilter] = useState({
@@ -62,10 +61,12 @@ function AdvancedCriteriaGroupForm({
   });
   const [filters, setFilters] = useState(getDefaultAppliedCustomFilters());
   const [filtersToApply, setFiltersToApply] = useState(null);
-  const status = edited?.status;
+  const status = editedEnrollmentParams?.status;
+  const [enrollmentSummaryParams, setEnrollmentSummaryParams] = useState(null);
+  const [summaryMatchesEditedParams, setSummaryMatchesEditedParams] = useState(false);
 
   const getBenefitPlanDefaultCriteria = () => {
-    const jsonExt = edited?.benefitPlan?.jsonExt ?? '{}';
+    const jsonExt = benefitPlan?.jsonExt ?? '{}';
     const jsonData = JSON.parse(jsonExt);
 
     // Note: advanced_criteria is migrated from [filters] to {status: filters}
@@ -85,7 +86,21 @@ function AdvancedCriteriaGroupForm({
     } else {
       setFilters(defaultAppliedCustomFilters);
     }
-  }, [edited]);
+  }, [editedEnrollmentParams]);
+
+  useEffect(() => {
+    const stringFilters = filters.map(({
+      filter, value, field, type,
+    }) => (`"${field}__${filter}__${type}=${value}"`));
+
+    const isMatch = (
+      enrollmentSummaryParams && benefitPlan
+      && decodeId(enrollmentSummaryParams.benefitPlan.id) === decodeId(benefitPlan?.id)
+      && `[${enrollmentSummaryParams.customFilters}]` === `[${stringFilters}]`
+    );
+
+    setSummaryMatchesEditedParams(isMatch);
+  }, [benefitPlan?.id, filters]);
 
   const createParams = (moduleName, objectTypeName, uuidOfObject = null, additionalParams = null) => {
     const params = [
@@ -141,7 +156,7 @@ function AdvancedCriteriaGroupForm({
         custom_filter_condition: `${field}__${filter}__${type}=${value}`,
       })),
     );
-    const jsonExt = updateJsonExt(objectToSave.jsonExt, outputFilters);
+    const jsonExt = updateJsonExt(editedEnrollmentParams.jsonExt, outputFilters);
     updateAttributes(jsonExt);
     setAppliedCustomFilters(outputFilters);
 
@@ -154,20 +169,29 @@ function AdvancedCriteriaGroupForm({
     setFiltersToApply(customFilters);
     const params = [
       `customFilters: [${customFilters}]`,
-      `benefitPlanId: "${decodeId(object.id)}"`,
+      `benefitPlanId: "${decodeId(benefitPlan.id)}"`,
     ];
     fetchGroupEnrollmentSummary(params);
+
+    setEnrollmentSummaryParams({
+      ...enrollmentSummaryParams,
+      customFilters,
+      benefitPlan,
+    });
+
+    setSummaryMatchesEditedParams(true);
+
     handleClose();
   };
 
   useEffect(() => {
-    if (object && isEmptyObject(object) === false) {
+    if (benefitPlan && isEmptyObject(benefitPlan) === false) {
       let paramsToFetchFilters = [];
       if (objectType === INDIVIDUAL) {
         paramsToFetchFilters = createParams(
           moduleName,
           objectType,
-          isBase64Encoded(object.id) ? decodeId(object.id) : object.id,
+          isBase64Encoded(benefitPlan.id) ? decodeId(benefitPlan.id) : benefitPlan.id,
           additionalParams,
         );
       } else {
@@ -179,14 +203,14 @@ function AdvancedCriteriaGroupForm({
       }
       fetchFilters(paramsToFetchFilters);
     }
-  }, [object]);
+  }, [benefitPlan]);
 
   useEffect(() => {}, [filters]);
 
   const openConfirmEnrollmentDialog = () => {
     coreConfirm(
       formatMessage(intl, 'individual', 'individual.enrollment.confirmTitle'),
-      formatMessageWithValues(intl, 'individual', 'individual.enrollment.confirmGroupMessageDialog', { benefitPlanName: object.name }),
+      formatMessageWithValues(intl, 'individual', 'individual.enrollment.confirmGroupMessageDialog', { benefitPlanName: benefitPlan.name }),
     );
   };
 
@@ -199,7 +223,7 @@ function AdvancedCriteriaGroupForm({
           custom_filter_condition: `${field}__${filter}__${type}=${value}`,
         })),
       );
-      const jsonExt = updateJsonExt(objectToSave.jsonExt, outputFilters);
+      const jsonExt = updateJsonExt(editedEnrollmentParams.jsonExt, outputFilters);
       const jsonData = JSON.parse(jsonExt);
       const advancedCriteria = jsonData.advanced_criteria?.[status] || [];
 
@@ -208,7 +232,7 @@ function AdvancedCriteriaGroupForm({
       setFiltersToApply(customFilters);
       const params = {
         customFilters: `[${customFilters}]`,
-        benefitPlanId: `"${decodeId(object.id)}"`,
+        benefitPlanId: `"${decodeId(benefitPlan.id)}"`,
         status: `"${status}"`,
       };
       confirmGroupEnrollment(
@@ -284,14 +308,14 @@ function AdvancedCriteriaGroupForm({
             variant="contained"
             color="primary"
             autoFocus
-            disabled={!object || confirmed}
+            disabled={!benefitPlan || confirmed}
           >
             {formatMessage(intl, 'individual', 'individual.enrollment.previewEnrollment')}
           </Button>
         </div>
       </div>
       <Divider />
-      {fetchedEnrollmentGroupSummary && (
+      {(fetchedEnrollmentGroupSummary && summaryMatchesEditedParams) && (
       <div>
         <div className={classes.item}>
           {formatMessage(intl, 'individual', 'individual.enrollment.summary')}
@@ -369,7 +393,7 @@ function AdvancedCriteriaGroupForm({
               variant="contained"
               color="primary"
               autoFocus
-              disabled={!object || confirmed || enrollmentGroupSummary.numberOfGroupsToUpload === '0'}
+              disabled={!benefitPlan || confirmed || enrollmentGroupSummary.numberOfGroupsToUpload === '0'}
             >
               {formatMessage(intl, 'individual', 'individual.enrollment.confirmEnrollment')}
             </Button>
@@ -377,7 +401,7 @@ function AdvancedCriteriaGroupForm({
               rights={rights}
               classes={classes}
               advancedCriteria={filtersToApply}
-              benefitPlanToEnroll={object.id}
+              benefitPlanToEnroll={enrollmentSummaryParams.benefitPlan.id}
               enrollmentSummary={enrollmentGroupSummary}
               confirmed={confirmed}
             />
