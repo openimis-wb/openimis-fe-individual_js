@@ -94,13 +94,14 @@ function AdvancedCriteriaGroupForm({
     }) => (`"${field}__${filter}__${type}=${value}"`));
 
     const isMatch = (
-      enrollmentSummaryParams && benefitPlan
+      enrollmentSummaryParams && benefitPlan && status
       && decodeId(enrollmentSummaryParams.benefitPlan.id) === decodeId(benefitPlan?.id)
       && `[${enrollmentSummaryParams.customFilters}]` === `[${stringFilters}]`
+      && enrollmentSummaryParams.status === editedEnrollmentParams.status
     );
 
     setSummaryMatchesEditedParams(isMatch);
-  }, [benefitPlan?.id, filters]);
+  }, [benefitPlan?.id, filters, editedEnrollmentParams?.status]);
 
   const createParams = (moduleName, objectTypeName, uuidOfObject = null, additionalParams = null) => {
     const params = [
@@ -170,6 +171,7 @@ function AdvancedCriteriaGroupForm({
     const params = [
       `customFilters: [${customFilters}]`,
       `benefitPlanId: "${decodeId(benefitPlan.id)}"`,
+      `status: "${status}"`,
     ];
     fetchGroupEnrollmentSummary(params);
 
@@ -177,6 +179,7 @@ function AdvancedCriteriaGroupForm({
       ...enrollmentSummaryParams,
       customFilters,
       benefitPlan,
+      status,
     });
 
     setSummaryMatchesEditedParams(true);
@@ -385,15 +388,15 @@ function AdvancedCriteriaGroupForm({
             </Paper>
           </Grid>
         </Grid>
-        <Grid container spacing={3}>
-          <Grid item xs={5} />
-          <Grid item xs={5}>
+        <Grid container spacing={2}>
+          <Grid item xs />
+          <Grid item xs="auto">
             <Button
               onClick={() => openConfirmEnrollmentDialog()}
               variant="contained"
               color="primary"
               autoFocus
-              disabled={!benefitPlan || confirmed || enrollmentGroupSummary.numberOfGroupsToUpload === '0'}
+              disabled={!benefitPlan || confirmed || enrollmentGroupSummary.numberOfGroupsToUpload === '0' || enrollmentGroupSummary.maxActiveBeneficiariesExceeded}
             >
               {formatMessage(intl, 'individual', 'individual.enrollment.confirmEnrollment')}
             </Button>
@@ -406,7 +409,6 @@ function AdvancedCriteriaGroupForm({
               confirmed={confirmed}
             />
           </Grid>
-          <Grid item xs={5} />
         </Grid>
       </div>
       )}
