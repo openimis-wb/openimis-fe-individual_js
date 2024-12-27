@@ -95,13 +95,14 @@ class EnrollmentGroupHeadPanel extends FormPanel {
             />
           </Grid>
         </Grid>
-        <Divider />
         <Grid>
           <>
-            <div className={classes.item}>
-              {formatMessage(intl, 'individual', 'individual.enrollment.criteria')}
-            </div>
-            <Divider />
+            <Grid container className={classes.item}>
+              <Divider style={{ width: '100%' }} />
+              <div className={classes.item}>
+                {formatMessage(intl, 'individual', 'individual.enrollment.criteria')}
+              </div>
+            </Grid>
             <Grid container className={classes.item}>
               <AdvancedCriteriaGroupForm
                 benefitPlan={editedEnrollmentParams.benefitPlan}

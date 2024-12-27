@@ -2,7 +2,9 @@
 import React, { useEffect, useState } from 'react';
 import { injectIntl } from 'react-intl';
 import Button from '@material-ui/core/Button';
-import { Divider, Grid, Paper } from '@material-ui/core';
+import VisibilityIcon from '@material-ui/icons/Visibility';
+import AddIcon from '@material-ui/icons/Add';
+import { Divider, Grid } from '@material-ui/core';
 import {
   decodeId,
   formatMessage,
@@ -14,8 +16,6 @@ import {
 import { withTheme, withStyles } from '@material-ui/core/styles';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import AddCircle from '@material-ui/icons/Add';
-import Typography from '@material-ui/core/Typography';
 import AdvancedCriteriaRowValue from './AdvancedCriteriaRowValue';
 import {
   CLEARED_STATE_FILTER,
@@ -25,6 +25,8 @@ import {
 import { isBase64Encoded, isEmptyObject, capitalize } from '../../utils';
 import { confirmEnrollment, fetchIndividualEnrollmentSummary } from '../../actions';
 import IndividualPreviewEnrollmentDialog from './IndividualPreviewEnrollmentDialog';
+import ErrorSnackbar from './ErrorSnackbar';
+import SummaryCard from '../generics/SummaryCard';
 
 const styles = (theme) => ({
   item: theme.paper.item,
@@ -64,6 +66,7 @@ function AdvancedCriteriaForm({
   const status = editedEnrollmentParams?.status;
   const [enrollmentSummaryParams, setEnrollmentSummaryParams] = useState(null);
   const [summaryMatchesEditedParams, setSummaryMatchesEditedParams] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
 
   const getBenefitPlanDefaultCriteria = () => {
     const jsonExt = benefitPlan?.jsonExt ?? '{}';
@@ -188,6 +191,10 @@ function AdvancedCriteriaForm({
   };
 
   useEffect(() => {
+    setSnackbarOpen(enrollmentSummary?.maxActiveBeneficiariesExceeded);
+  }, [enrollmentSummary]);
+
+  useEffect(() => {
     if (benefitPlan && isEmptyObject(benefitPlan) === false) {
       let paramsToFetchFilters = [];
       if (objectType === INDIVIDUAL) {
@@ -259,169 +266,107 @@ function AdvancedCriteriaForm({
           readOnly={confirmed}
         />
       ))}
-      { !confirmed ? (
-        <div
-          style={{ backgroundColor: '#DFEDEF', paddingLeft: '10px', paddingBottom: '10px' }}
-        >
-          <AddCircle
-            style={{
-              border: 'thin solid',
-              borderRadius: '40px',
-              width: '16px',
-              height: '16px',
-            }}
-            onClick={handleAddFilter}
-            disabled={confirmed}
-          />
+      <Grid
+        container
+        item
+        direction="row"
+        spacing={2}
+        style={{ margin: '0px', marginBottom: '8px' }}
+      >
+        <Grid item>
           <Button
             onClick={handleAddFilter}
-            variant="outlined"
-            style={{
-              border: '0px',
-              marginBottom: '6px',
-              fontSize: '0.8rem',
-            }}
+            variant="text"
             disabled={confirmed}
+            startIcon={<AddIcon />}
           >
             {formatMessage(intl, 'individual', 'individual.enrollment.addFilters')}
           </Button>
-        </div>
-      // eslint-disable-next-line react/jsx-no-useless-fragment
-      ) : (<></>) }
-      <div>
-        <div style={{ float: 'left' }}>
+        </Grid>
+        <Grid item>
           <Button
             onClick={handleRemoveFilter}
-            variant="outlined"
-            style={{
-              border: '0px',
-            }}
+            variant="text"
             disabled={confirmed}
           >
             {formatMessage(intl, 'individual', 'individual.enrollment.clearAllFilters')}
           </Button>
-        </div>
-        <div style={{
-          float: 'right',
-          paddingRight: '16px',
-        }}
-        >
+        </Grid>
+        <Grid item>
           <Button
             onClick={saveCriteria}
             variant="contained"
             color="primary"
             autoFocus
             disabled={!benefitPlan || confirmed}
+            startIcon={<VisibilityIcon />}
           >
             {formatMessage(intl, 'individual', 'individual.enrollment.previewEnrollment')}
           </Button>
-        </div>
-      </div>
-      <Divider />
+        </Grid>
+        {(fetchedEnrollmentSummary && summaryMatchesEditedParams) && (
+          <Grid item xs="auto">
+            <IndividualPreviewEnrollmentDialog
+              rights={rights}
+              classes={classes}
+              advancedCriteria={filtersToApply}
+              benefitPlanToEnroll={enrollmentSummaryParams.benefitPlan.id}
+              enrollmentSummary={enrollmentSummary}
+              confirmed={confirmed}
+              startIcon={<VisibilityIcon />}
+            />
+          </Grid>
+        )}
+      </Grid>
       {(fetchedEnrollmentSummary && summaryMatchesEditedParams) && (
       <div>
+        <Divider style={{ width: '100%' }} />
         <div className={classes.item}>
           {formatMessage(intl, 'individual', 'individual.enrollment.summary')}
         </div>
-        <Divider />
         <Grid container spacing={2} style={{ padding: '10px 0px' }}>
-          <Grid item xs={6}>
-            <Paper elevation={3} style={{ padding: '20px' }}>
-              <Typography variant="h6" gutterBottom>
-                {formatMessage(intl, 'individual', 'individual.enrollment.totalNumberOfIndividuals')}
-              </Typography>
-              <Typography variant="body1">
-                {enrollmentSummary.totalNumberOfIndividuals}
-              </Typography>
-            </Paper>
-          </Grid>
-          <Grid item xs={6}>
-            <Paper elevation={3} style={{ padding: '20px' }}>
-              <Typography variant="h6" gutterBottom>
-                {formatMessage(intl, 'individual', 'individual.enrollment.numberOfSelectedIndividuals')}
-              </Typography>
-              <Typography variant="body1">
-                {enrollmentSummary.numberOfSelectedIndividuals}
-              </Typography>
-            </Paper>
-          </Grid>
-          <Grid item xs={6}>
-            <Paper elevation={3} style={{ padding: '20px' }}>
-              <Typography variant="h6" gutterBottom>
-                {formatMessage(intl, 'individual', 'individual.enrollment.numberOfIndividualsAssignedToProgramme')}
-              </Typography>
-              <Typography variant="body1">
-                {enrollmentSummary.numberOfIndividualsAssignedToProgramme}
-              </Typography>
-            </Paper>
-          </Grid>
-          <Grid item xs={6}>
-            <Paper elevation={3} style={{ padding: '20px' }}>
-              <Typography variant="h6" gutterBottom>
-                {formatMessage(intl, 'individual', 'individual.enrollment.numberOfIndividualsNotAssignedToProgramme')}
-              </Typography>
-              <Typography variant="body1">
-                {enrollmentSummary.numberOfIndividualsNotAssignedToProgramme}
-              </Typography>
-            </Paper>
-          </Grid>
-          <Grid item xs={6}>
-            <Paper elevation={3} style={{ padding: '20px' }}>
-              <Typography variant="h6" gutterBottom>
-                {/* eslint-disable-next-line max-len */}
-                {formatMessage(intl, 'individual', 'individual.enrollment.numberOfIndividualsAssignedToSelectedProgramme')}
-              </Typography>
-              <Typography variant="body1">
-                {enrollmentSummary.numberOfIndividualsAssignedToSelectedProgramme}
-              </Typography>
-            </Paper>
-          </Grid>
-          <Grid item xs={6}>
-            <Paper elevation={3} style={{ padding: '20px' }}>
-              <Typography variant="h6" gutterBottom>
-                {/* eslint-disable-next-line max-len */}
-                {formatMessageWithValues(intl, 'individual', 'individual.enrollment.numberOfIndividualsAssignedToSelectedProgrammeAndStatus', { selectedStatus: capitalize(editedEnrollmentParams?.status) })}
-              </Typography>
-              <Typography variant="body1">
-                {enrollmentSummary.numberOfIndividualsAssignedToSelectedProgrammeAndStatus}
-              </Typography>
-            </Paper>
-          </Grid>
-          <Grid item xs={6}>
-            <Paper elevation={3} style={{ padding: '20px' }}>
-              <Typography variant="h6" gutterBottom>
-                {/* eslint-disable-next-line max-len */}
-                {formatMessage(intl, 'individual', 'individual.enrollment.numberOfIndividualsToBeUploaded')}
-              </Typography>
-              <Typography variant="body1">
-                {enrollmentSummary.numberOfIndividualsToUpload}
-              </Typography>
-            </Paper>
-          </Grid>
-          <Grid item xs={6}>
-            <Paper elevation={3} style={{ padding: '20px' }}>
-              <Typography variant="h6" gutterBottom>
-                {/* eslint-disable-next-line max-len */}
-                {formatMessageWithValues(intl, 'individual', 'individual.enrollment.numberOfIndividualsWithStatusPostEnrollment', { selectedStatus: capitalize(editedEnrollmentParams?.status) })}
-              </Typography>
-              <Typography variant="body1">
-                {enrollmentSummary.numberOfIndividualsToUpload + enrollmentSummary.numberOfIndividualsAssignedToSelectedProgrammeAndStatus}
-              </Typography>
-            </Paper>
-          </Grid>
-          {enrollmentSummary.maxActiveBeneficiariesExceeded && (
           <Grid item xs={12}>
-            <Paper elevation={3} style={{ padding: '15px' }}>
-              <Typography variant="body1" style={{ color: '#c62828', fontWeight: 'bold' }}>
-                {formatMessageWithValues(intl, 'individual', 'individual.enrollment.warnMaxActiveBeneficiariesExceeded', { benefitPlanName: benefitPlan?.name, maxActiveBeneficiaries: benefitPlan?.maxBeneficiaries })}
-              </Typography>
-            </Paper>
+            <SummaryCard
+              title={formatMessage(intl, 'individual', 'individual.enrollment.totalNumberOfIndividuals')}
+              number={enrollmentSummary.totalNumberOfIndividuals}
+            />
           </Grid>
-          )}
+          <Grid item xs={12}>
+            <SummaryCard
+              title={formatMessage(intl, 'individual', 'individual.enrollment.numberOfSelectedIndividuals')}
+              number={enrollmentSummary.numberOfSelectedIndividuals}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <SummaryCard
+              title={formatMessageWithValues(intl, 'individual', 'individual.enrollment.numberOfIndividualsToUpload', { benefitPlanName: benefitPlan?.name })}
+              number={enrollmentSummary.numberOfIndividualsToUpload}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <SummaryCard
+              title={formatMessageWithValues(intl, 'individual', 'individual.enrollment.numberOfIndividualsAssignedToSelectedProgrammeAndStatus', { selectedStatus: capitalize(editedEnrollmentParams?.status), benefitPlanName: benefitPlan?.name })}
+              number={enrollmentSummary.numberOfIndividualsAssignedToSelectedProgrammeAndStatus}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <SummaryCard
+              title={formatMessageWithValues(intl, 'individual', 'individual.enrollment.numberOfIndividualsWithStatusPostEnrollment', { selectedStatus: capitalize(editedEnrollmentParams?.status), benefitPlanName: benefitPlan?.name })}
+              number={enrollmentSummary.numberOfIndividualsToUpload + enrollmentSummary.numberOfIndividualsAssignedToSelectedProgrammeAndStatus}
+              errorNumber={enrollmentSummary.maxActiveBeneficiariesExceeded}
+            />
+          </Grid>
+          <ErrorSnackbar
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            open={snackbarOpen}
+            setOpen={setSnackbarOpen}
+          >
+            {formatMessageWithValues(intl, 'individual', 'individual.enrollment.warnMaxActiveBeneficiariesExceeded', { benefitPlanName: benefitPlan?.name, maxActiveBeneficiaries: benefitPlan?.maxBeneficiaries })}
+          </ErrorSnackbar>
         </Grid>
-        <Grid container spacing={3}>
-          <Grid item xs={5} />
-          <Grid item xs={5}>
+        <Grid container spacing={2}>
+          <Grid item xs />
+          <Grid item xs="auto">
             <Button
               onClick={() => openConfirmEnrollmentDialog()}
               variant="contained"
@@ -431,16 +376,7 @@ function AdvancedCriteriaForm({
             >
               {formatMessage(intl, 'individual', 'individual.enrollment.confirmEnrollment')}
             </Button>
-            <IndividualPreviewEnrollmentDialog
-              rights={rights}
-              classes={classes}
-              advancedCriteria={filtersToApply}
-              benefitPlanToEnroll={enrollmentSummaryParams.benefitPlan.id}
-              enrollmentSummary={enrollmentSummary}
-              confirmed={confirmed}
-            />
           </Grid>
-          <Grid item xs={5} />
         </Grid>
       </div>
       )}
