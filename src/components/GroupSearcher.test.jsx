@@ -52,7 +52,7 @@ const GROUP = { id: 'group-1', code: 'G1', head: null, location: null };
 const renderSearcher = () => {
   const props = {
     intl: {},
-    modulesManager: { getRef: () => null },
+    modulesManager: { getRef: () => null, getConf: (module, key, defaultValue) => defaultValue },
     history: {},
     rights: [RIGHT_GROUP_DELETE],
     groups: [GROUP],

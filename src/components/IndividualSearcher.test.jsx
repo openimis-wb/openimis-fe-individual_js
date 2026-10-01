@@ -59,7 +59,7 @@ const store = createStore((state = {}) => state);
 const renderSearcher = () => {
   const props = {
     intl: {},
-    modulesManager: { getRef: () => null },
+    modulesManager: { getRef: () => null, getConf: (module, key, defaultValue) => defaultValue },
     history: {},
     rights: [RIGHT_INDIVIDUAL_DELETE],
     individuals: [ACTIVE, DELETED],
