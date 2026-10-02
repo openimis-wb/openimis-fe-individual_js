@@ -46,6 +46,7 @@ import {
   INDIVIDUAL_MODULE_NAME,
   INDIVIDUAL_LABEL,
   INDIVIDUALS_UPLOAD_FORM_CONTRIBUTION_KEY,
+  INDIVIDUAL_SEARCHER_COLUMNS_CONTRIBUTION_KEY,
 } from '../constants';
 import IndividualFilter from './IndividualFilter';
 import {
@@ -351,6 +352,7 @@ function IndividualSearcher({
         exportFieldsColumns={exportFieldsColumns}
         exportFieldLabel={formatMessage(intl, 'individual', 'export.label')}
         chooseExportableColumns
+        columnsContributionKey={INDIVIDUAL_SEARCHER_COLUMNS_CONTRIBUTION_KEY}
         cacheFiltersKey="individualsFilterCache"
         resetFiltersOnUnmount
         // eslint-disable-next-line react/jsx-props-no-spreading, max-len
