@@ -32,6 +32,9 @@ export const BENEFITS_TAB_VALUE = 'BenefitTaskTab';
 export const INDIVIDUAL_TABS_LABEL_CONTRIBUTION_KEY = 'individual.TabPanel.label';
 export const INDIVIDUAL_TABS_PANEL_CONTRIBUTION_KEY = 'individual.TabPanel.panel';
 
+export const INDIVIDUAL_HEAD_PANEL_CONTRIBUTION_KEY = 'individual.Individual.headPanel';
+export const GROUP_HEAD_PANEL_CONTRIBUTION_KEY = 'group.Group.headPanel';
+
 export const GROUPS_TABS_LABEL_CONTRIBUTION_KEY = 'group.TabPanel.label';
 export const GROUPS_TABS_PANEL_CONTRIBUTION_KEY = 'group.TabPanel.panel';
 

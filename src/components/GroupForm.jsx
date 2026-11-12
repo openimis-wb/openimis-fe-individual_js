@@ -13,7 +13,7 @@ import {
     Helmet,
 } from "@openimis/fe-core";
 import { fetchGroup, clearGroup } from "../actions";
-import { RIGHT_GROUP_UPDATE } from "../constants";
+import { RIGHT_GROUP_UPDATE, GROUP_HEAD_PANEL_CONTRIBUTION_KEY } from "../constants";
 import GroupHeadPanel from "./GroupHeadPanel";
 import GroupTabPanel from "./GroupTabPanel";
 
@@ -136,6 +136,7 @@ class GroupForm extends Component {
                         save={this.save}
                         onEditedChanged={this.onEditedChanged}
                         HeadPanel={GroupHeadPanel}
+                        headPanelContributionsKey={GROUP_HEAD_PANEL_CONTRIBUTION_KEY}
                         Panels={[GroupTabPanel]}
                         mandatoryFieldsEmpty={this.isMandatoryFieldsEmpty()}
                         saveTooltip={saveTooltip}

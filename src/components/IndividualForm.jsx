@@ -18,6 +18,7 @@ import {
     withHistory,
 } from "@openimis/fe-core";
 import { fetchIndividual } from "../actions";
+import { INDIVIDUAL_HEAD_PANEL_CONTRIBUTION_KEY } from "../constants";
 import { ACTION_TYPE } from "../reducer";
 import IndividualHeadPanel from "./IndividualHeadPanel";
 import IndividualTabPanel from "./IndividualTabPanel";
@@ -223,6 +224,7 @@ class IndividualForm extends Component {
                         save={this.save}
                         onEditedChanged={this.onEditedChanged}
                         HeadPanel={IndividualHeadPanel}
+                        headPanelContributionsKey={INDIVIDUAL_HEAD_PANEL_CONTRIBUTION_KEY}
                         Panels={[IndividualTabPanel]}
                         mandatoryFieldsEmpty={this.isMandatoryFieldsEmpty()}
                         saveTooltip={saveTooltip}
